@@ -71,9 +71,3 @@ weekday_range_slider.observe(update_weekday_labels, 'value')
 # Interaktive Anzeige der Karte mit den Widgets
 display(widgets.VBox([weekday_range_slider_labels]))
 widgets.interactive(update_map, weekday_range=weekday_range_slider, weekday_range_slider_labels = widgets.Label, hour_range=hour_range_slider, vehicle=vehicle_dropdown)
-
-
-weekday_slider = widgets.IntSlider(value=1, min=1, max=7, description='Wochentag:')
-hour_slider = widgets.IntSlider(value=0, min=0, max=23, description='Uhrzeit:')
-vehicle_dropdown = widgets.Dropdown(options=['Fußgänger', 'PKW', 'Fahrrad'], description='Am Fahrradunfall beteiligter Fahrzeugtyp:')
-widgets.interactive(update_map, weekday=weekday_slider, hour=hour_slider, vehicle=vehicle_dropdown)
