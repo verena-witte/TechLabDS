@@ -16,14 +16,21 @@ df = pd.read_csv('Unfallorte_Muenster.csv')
 df['YGCSWGS84'] = df['YGCSWGS84'].str.replace(',', '.').astype(float)
 df['XGCSWGS84'] = df['XGCSWGS84'].str.replace(',', '.').astype(float)
 
-# Funktion zum Aktualisieren der Karte basierend auf dem ausgewählten Wochentag, der Uhrzeit und dem Fahrzeugtyp
-def update_map(weekday, hour, vehicle):
-    if vehicle == 'Fußgänger':
-        filtered_df = df[(df['UWOCHENTAG'] == weekday) & (df['USTUNDE'] == hour) & (df['IstFuss'] == 1)]
+# Funktion zum Aktualisieren der Karte basierend auf der ausgewählten Zeitspanne, dem Wochentag und dem Fahrzeugtyp
+def update_map(weekday_range, hour_range, vehicle):
+    start_weekday = weekday_range[0]
+    end_weekday = weekday_range[1]
+    start_hour = hour_range[0]
+    end_hour = hour_range[1]
+    
+    if vehicle == 'alle':
+        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour))]
+    elif vehicle == 'Fußgänger':
+        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & (df['IstFuss'] == 1)]
     elif vehicle == 'PKW':
-        filtered_df = df[(df['UWOCHENTAG'] == weekday) & (df['USTUNDE'] == hour) & (df['IstPKW'] == 1)]
+        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & (df['IstPKW'] == 1)]
     elif vehicle == 'Fahrrad':
-        filtered_df = df[(df['UWOCHENTAG'] == weekday) & (df['USTUNDE'] == hour) & (df['IstRad'] == 1)]
+        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & (df['IstRad'] == 1)]
     else:
         filtered_df = pd.DataFrame(columns=df.columns)  # Leerer DataFrame, wenn kein Fahrzeugtyp ausgewählt ist
     
@@ -39,8 +46,29 @@ def update_map(weekday, hour, vehicle):
     # Karte anzeigen
     display(map)
 
-# Schieberegler für Wochentag, Uhrzeit und Dropdown-Liste für Fahrzeugtyp erstellen
-weekday_slider = widgets.IntSlider(value=1, min=1, max=7, description='Wochentag:')
-hour_slider = widgets.IntSlider(value=0, min=0, max=23, description='Uhrzeit:')
-vehicle_dropdown = widgets.Dropdown(options=['Fußgänger', 'PKW', 'Fahrrad'], description='Am Fahrradunfall beteiligter Fahrzeugtyp:')
-widgets.interactive(update_map, weekday=weekday_slider, hour=hour_slider, vehicle=vehicle_dropdown)
+# Wochentagsbezeichnungen
+weekday_labels = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+
+# Schieberegler für Wochentagsbereich und Stundenbereich sowie Dropdown-Liste für Fahrzeugtyp erstellen
+weekday_range_slider = widgets.IntRangeSlider(value=[1, 7], min=1, max=7, description='Wochentagsbereich:', continuous_update=False, step=1, layout={'width': '400px'}, readout_format='02d')
+weekday_range_slider.style.handle_color = '#4287f5'
+weekday_range_slider.style.slider_color = '#4287f5'
+weekday_range_slider_labels = widgets.Label(value='Wochentage: ' + weekday_labels[weekday_range_slider.value[0]-1] + ' - ' + weekday_labels[weekday_range_slider.value[1]-1])
+
+hour_range_slider = widgets.IntRangeSlider(value=[0, 23], min=0, max=23, description='Stundenbereich:', continuous_update=False, step=1, layout={'width': '400px'})
+hour_range_slider.style.handle_color = '#4287f5'
+hour_range_slider.style.slider_color = '#4287f5'
+
+vehicle_dropdown = widgets.Dropdown(options=['alle', 'Fußgänger', 'PKW', 'Fahrrad'], description='Am Fahrradunfall beteiligter Fahrzeugtyp:')
+
+def update_weekday_labels(change):
+    start_label = weekday_labels[change['new'][0]-1]
+    end_label = weekday_labels[change['new'][1]-1]
+    weekday_range_slider_labels.value = 'Wochentage: ' + start_label + ' - ' + end_label
+
+weekday_range_slider.observe(update_weekday_labels, 'value')
+
+# Interaktive Anzeige der Karte mit den Widgets
+display(widgets.VBox([weekday_range_slider_labels]))
+widgets.interactive(update_map, weekday_range=weekday_range_slider, weekday_range_slider_labels = widgets.Label, hour_range=hour_range_slider, vehicle=vehicle_dropdown)
+
