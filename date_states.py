@@ -3,6 +3,7 @@ import requests
 import datetime
 import pandas as pd
 
+
 # Documentation for open-meteo api
 # link: https://open-meteo.com/en/docs#hourly=temperature_2m,rain,showers,weathercode
 
@@ -27,7 +28,8 @@ def get_weather_data() -> int:
     weather = set([])  # create set to call set.intersection(set) later on
 
     weather.add(weather_data["hourly"]["weathercode"][hour])
-    weather.add(weather_data["hourly"]["weathercode"][hour-1])  # CAVE: what happens if this function is called at midnight 00:00?
+    weather.add(weather_data["hourly"]["weathercode"][
+                    hour - 1])  # CAVE: what happens if this function is called at midnight 00:00?
     # TODO: check for data at midnight (00-1)
     # requires data from the day before
 
@@ -61,8 +63,7 @@ weather_condition = get_weather_data()
 filter_by_weather(weather_condition)
 
 
-
-def filter_by_time():
+def filter_by_time(df_raw: pd.DataFrame, time_unit_list: list):
     today = datetime.datetime.now()
     print(today)
     year = today.year
@@ -76,17 +77,34 @@ def filter_by_time():
     print(hour)
 
     # map weekdays to standard of Unfallatlas since they start with 1 on sunday opposite to open-meteo 0 on monday
-    weekday_dict = {0:2, 1:3, 2:4, 3:5, 4:6, 5:7, 6:1}
+    weekday_dict = {0: 2, 1: 3, 2: 4, 3: 5, 4: 6, 5: 7, 6: 1}
     weekday = weekday_dict[weekday]
     print(f' weekday: {weekday}')
 
     today_weather_format = f"{year}-{month}-{day}T{hour}:00"
     print(today_weather_format)
 
+    for time_unit in time_unit_list:
+        if time_unit == "hour":
+            filt_time = (df_raw["USTUNDE"] == hour)
+            df_time = df_raw.loc[filt_time]  # apply filter
+        if time_unit == "weekday":
+            filt_time = (df_raw["UWOCHENTAG"] == weekday)
+            df_time = df_raw.loc[filt_time]  # apply filter
+        if time_unit == "month":
+            filt_time = (df_raw["UMONAT"] == month)
+            df_time = df_raw.loc[filt_time]  # apply filter
+        if time_unit == "year":
+            filt_time = (df_raw["UJAHR"] == year)
+            df_time = df_raw.loc[filt_time]  # apply filter
 
-
-
-
+    # or solve this via a dict?
+    # TODO: check where to get the actual time values (in the dict as keys) from
+    time_unit_dict = {hour: "USTUNDE", weekday: "UWOCHENTAG", month: "UMONAT", year: "UJAHR"}
+    time_unit_dict_main = {k: time_unit_dict[k] for k in time_unit_list}
+    for key in time_unit_dict_main.keys():
+        filt_time = (df_raw[time_unit_dict_main[key]] == key)
+        df_time = df_raw.loc[filt_time]  # apply filter
 
 ### extend request for additional data
 # could extend weather_params to retrieve additional data
@@ -96,7 +114,3 @@ def filter_by_time():
 # temperature = weather_data["hourly"]["temperature_2m"][hour]
 # rain = weather_data["hourly"]["rain"][hour + 1]
 # showers = weather_data["hourly"]["showers"][hour + 1]
-
-
-
-
