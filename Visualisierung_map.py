@@ -57,7 +57,7 @@ def update_map(weekday_range, hour_range, vehicle, roadcondition):
     display(map)    
     
 # Wochentagsbezeichnungen
-weekday_labels = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+weekday_labels = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag']
 
 # Schieberegler für Wochentagsbereich und Stundenbereich sowie Dropdown-Liste für Fahrzeugtyp erstellen
 weekday_range_slider = widgets.IntRangeSlider(value=[1, 7], min=1, max=7, description='Wochentagsbereich:', continuous_update=False, step=1, layout={'width': '400px'}, readout_format='02d')
