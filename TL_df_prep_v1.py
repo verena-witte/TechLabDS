@@ -11,6 +11,10 @@ path_unfallorte = "/home/ubuntu/TechLabs_23/Unfallorte"
 
 
 def get_raw_file_list(path_base: str) -> list:
+    # gets all files in subsequent directories that end with LinRef.txt or LinRef.csv
+    # and returns the file names as a list
+
+
     # data_dirs = [d for d in os.listdir(path_base)]
     # list_1 = [f for f in data_dirs if os.path.isdir(os.path.join(path_base, f))]
     # print(list_1)
@@ -25,8 +29,16 @@ def get_raw_file_list(path_base: str) -> list:
 
 
 def cut_to_region(csv_path: str, geo_id_dict: dict, geo_id_list: list):
+    # filters the dataframe from the submitted file to a region specified by
+    # the german AGS ID (amtliche Gemeinde Schlüssel)
+
     df_raw = pd.read_csv(csv_path, delimiter=";")
-    year = df_raw.loc[1, "UJAHR"]
+    year = df_raw.loc[1, "UJAHR"]  # retrieve the year of the data
+    # TODO: change UJAHR above
+
+    # TODO: lower case conversion
+    # convert the column names to lowercase letters
+    # df_raw.rename(columns=str.lower, inplace=True)
 
     # print(df_raw)
     # print(df_raw.info)
@@ -55,7 +67,7 @@ def cut_to_region(csv_path: str, geo_id_dict: dict, geo_id_list: list):
     #     else:
     #         print("dropped column")
 
-    # rename columns to get a standardized df fpr every file
+    # rename columns to get a standardized df for every file
     column_dict = {"IstSonstige": "IstSonstig", "STRZUSTAND": "USTRZUSTAND"}
     df_raw = df_raw.rename(column_dict, axis=1)  # renames if possible
 
@@ -66,10 +78,14 @@ def cut_to_region(csv_path: str, geo_id_dict: dict, geo_id_list: list):
                    "IstRad", "IstPKW", "IstFuss", "IstKrad", "IstGkfz",
                    "IstSonstig", "USTRZUSTAND", "LINREFX", "LINREFY", "XGCSWGS84", "YGCSWGS84"]
     df_raw = df_raw[column_list]
+    # TODO: change col names to lower
 
     # filter df to region
     filt_location = (df_raw["ULAND"] == geo_ULAND) & (df_raw["UREGBEZ"] == geo_UREGBEZ) & (
             df_raw["UKREIS"] == geo_UKREIS) & (df_raw["UGEMEINDE"] == geo_UGEMEINDE)
+
+    # TODO: generate list_locid from the dict instead of importing it separately
+    # list_locid = geo_id_dict.keys()
 
     # attempts for alternative version where you can use the AGZ as input
     filt_location = (df_raw[list_locid[0]] == geo_id_dict[list_locid[0]]) & \
