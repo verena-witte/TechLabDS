@@ -64,9 +64,9 @@ def cut_to_region(csv_path: str, geo_id_dict: dict, path_base=os.getcwd()):
 
 
 def conc_dfs(df_list: list, path_base=os.getcwd()):
-    df_comb = pd.concat(df_list)
+    df_comb = pd.concat(df_list)  # concatenate the dfs of the different years into one df
     df_comb.to_csv(os.path.join(path_base, f"Unfallorte_Muenster_comb.csv"), index=False)
-    # df_comb.to_csv(f'/home/ubuntu/TechLabs_23/new_files/Unfallorte_Muenster_comb.csv', index=False)
+
 
 
 def main(geo_id_dict: dict, path_base=os.getcwd()):

@@ -1,4 +1,6 @@
 # imports
+import os
+
 import requests
 import datetime
 import pandas as pd
@@ -26,7 +28,10 @@ def get_weather_data() -> int:
 
     hour = datetime.datetime.now().hour  # get current time and day
     weather = set([])  # create set to call set.intersection(set) later on
+
+    # TODO: remove line below, just for testing
     hour = 0
+
     weather.add(weather_data["hourly"]["weathercode"][hour])
 
     if hour == 0:
@@ -34,7 +39,8 @@ def get_weather_data() -> int:
         # get yesterday's date for new request yesterday = datetime.datetime.now() - datetime.timedelta(1)  #
         # alternative version for timespan. Will be useful for the historical weather mapping
 
-        yesterday = datetime.date.today()  # use datetime.date object to evade the problem with leading zeros in
+        yesterday = datetime.date.today() - datetime.timedelta(
+            1)  # use datetime.date object to evade the problem with leading zeros in
         # integers
         print(yesterday)
         # get new request for yesterday's weather
@@ -51,14 +57,14 @@ def get_weather_data() -> int:
 
         response_yesterday.raise_for_status()
         weather_data_yesterday = response_yesterday.json()
+
+        # TODO: check why the weather data of yesterday just returns "None"
         print(weather_data_yesterday)
 
         weather.add(weather_data_yesterday["hourly"]["weathercode"][
                         hour - 1])
     else:
         weather.add(weather_data["hourly"]["weathercode"][hour - 1])
-
-
 
     # requires data from the day before
     print(weather)
@@ -69,6 +75,8 @@ def get_weather_data() -> int:
     ww_wet = {51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99}
 
     # set weather_cond for wet or freezing for later filtering the df
+    # CAVE: the condition of freezing gets prioritized over wet right now
+    # TODO: check priorization of freezing over wet
     weather_cond = 0
     if weather.intersection(ww_wet):
         weather_cond = 1
@@ -78,34 +86,25 @@ def get_weather_data() -> int:
     return weather_cond
 
 
-def filter_by_weather(df_raw: pd.DataFrame, weather_cond: int):
-
-
-    filt_weather = (df_raw["USTRZUSTAND"] == weather_cond)  # filter for weather conditions
+def filter_by_weather(df_raw: pd.DataFrame, path_base, weather_cond: int):
+    filt_weather = (df_raw["ustrzustand"] == weather_cond)  # create filter for weather conditions
     df_weather = df_raw.loc[filt_weather]  # apply filter
-
-    df_weather.to_csv(f'..\\Unfallorte_Muenster_Wetter_{weather_cond}.csv',
-                      index=False)  # write fitlered df to new file
-
-df_raw = pd.read_csv('Unfallorte_Muenster_comb.csv', encoding='ISO-8859-1', delimiter=",")  # get df
-weather_condition = get_weather_data()
-filter_by_weather(df_raw, weather_condition)
+    df_weather.to_csv(os.path.join(path_base, f"Unfallorte_Muenster_Wetter_{weather_cond}.csv"), index=False)
 
 
-def filter_by_time(df: pd.DataFrame, time_unit_list: list):
+def filter_by_time(df: pd.DataFrame, path_base, time_unit_list: list):
     # get time units (month, hour, e.g.)
     today = datetime.datetime.now()
-    year = today.year
     month = today.month
-    day = today.day  # no use for this
-    weekday = today.weekday()
+    day = today.day  # no use for this since the data contains no int for day
     hour = today.hour
 
+    weekday = today.weekday()
     # map weekdays to standard of Unfallatlas since they start with 1 on sunday opposite to open-meteo 0 on monday
     weekday_dict = {0: 2, 1: 3, 2: 4, 3: 5, 4: 6, 5: 7, 6: 1}
     weekday = weekday_dict[weekday]
 
-    time_unit_dict = {"USTUNDE": hour, "UWOCHENTAG": weekday, "UMONAT": month, "UJAHR": year}  # mapped column name
+    time_unit_dict = {"ustunde": hour, "uwochentag": weekday, "umonat": month}  # mapped column name
     # of dict to variable
     time_unit_dict_main = {k: time_unit_dict[k] for k in time_unit_list}  # create subset of time_unit_dict of
     # required time units (month, hour, e.g.) based on time_unit_list
@@ -114,19 +113,21 @@ def filter_by_time(df: pd.DataFrame, time_unit_list: list):
         filt_time = (df[key] == time_unit_dict_main[key])
         df = df.loc[filt_time]  # apply filter
 
-    df.to_csv(f'..\\Unfallorte_Muenster_Zeit.csv',
-              index=False)  # write fitlered df to new file
+    df.to_csv(os.path.join(path_base, "Unfallorte_Muenster_Zeit.csv"), index=False)
+    print()
 
 
-# df_raw = pd.read_csv('Unfallorte_Muenster_comb.csv', encoding='ISO-8859-1', delimiter=",")  # get df
-# time_unit_list = ["UMONAT", "USTUNDE"]
-# filter_by_time(df_raw, time_unit_list)
+def main(time_unit_list: list, path_base=os.getcwd(), ):
+    df_raw = pd.read_csv(os.path.join(path_base, "Unfallorte_Muenster_comb.csv"))
 
-### extend request for additional data
-# could extend weather_params to retrieve additional data
-# "hourly": ["temperature_2m", "rain", "showers", "weathercode"]
-# retrieve information from additional data
-# print(weather_data["hourly"]["showers"])
-# temperature = weather_data["hourly"]["temperature_2m"][hour]
-# rain = weather_data["hourly"]["rain"][hour + 1]
-# showers = weather_data["hourly"]["showers"][hour + 1]
+    weather_condition = get_weather_data()
+    filter_by_weather(df_raw, path_base, weather_condition)
+
+    filter_by_time(df_raw, path_base, time_unit_list)
+
+
+path_base = "/home/ubuntu/TechLabs_23/Unfallorte"
+path_base = "D:\\Jo_local\\Techlabs_23\\Unfallorte"
+time_unit_list = ["umonat"]  # change this for your time-criteria you wish to filter for
+
+main(time_unit_list, path_base)
