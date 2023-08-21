@@ -10,11 +10,12 @@ muenster_lon = 7.6261
 zoom_level = 12
 
 # CSV-Datei einlesen
-df = pd.read_csv('Unfallorte_Muenster.csv')
+df = pd.read_csv('Unfallorte_Muenster_comb.csv')
 
 # Koordinatenwerte im deutschen Zahlenformat in das amerikanische Zahlenformat konvertieren
-df['YGCSWGS84'] = df['YGCSWGS84'].str.replace(',', '.').astype(float)
-df['XGCSWGS84'] = df['XGCSWGS84'].str.replace(',', '.').astype(float)
+df['ygcswgs84'] = df['ygcswgs84'].str.replace(',', '.').astype(float)
+df['xgcswgs84'] = df['xgcswgs84'].str.replace(',', '.').astype(float)
+
 
 # Funktion zum Aktualisieren der Karte basierend auf der ausgewählten Zeitspanne, dem Wochentag, dem Fahrzeugtyp und dem Straßenzustand
 def update_map(weekday_range, hour_range, vehicle, roadcondition):
@@ -24,26 +25,26 @@ def update_map(weekday_range, hour_range, vehicle, roadcondition):
     end_hour = hour_range[1]
     
     if vehicle == 'alle':
-        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & ((df['USTRZUSTAND'] == 0) | (df['USTRZUSTAND'] == 1) | (df['USTRZUSTAND'] == 2))]
+        filtered_df = df[(df['uwochentag'].between(start_weekday, end_weekday)) & (df['ustunde'].between(start_hour, end_hour)) & ((df['ustrzustand'] == 0) | (df['ustrzustand'] == 1) | (df['ustrzustand'] == 2))]
     elif vehicle == 'Fußgänger':
-        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & ((df['USTRZUSTAND'] == 0) | (df['USTRZUSTAND'] == 1) | (df['USTRZUSTAND'] == 2)) & (df['IstFuss'] == 1)]
+        filtered_df = df[(df['uwochentag'].between(start_weekday, end_weekday)) & (df['ustunde'].between(start_hour, end_hour)) & ((df['ustrzustand'] == 0) | (df['ustrzustand'] == 1) | (df['ustrzustand'] == 2)) & (df['istfuss'] == 1)]
     elif vehicle == 'PKW':
-        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & ((df['USTRZUSTAND'] == 0) | (df['USTRZUSTAND'] == 1) | (df['USTRZUSTAND'] == 2)) & (df['IstPKW'] == 1)]
+        filtered_df = df[(df['uwochentag'].between(start_weekday, end_weekday)) & (df['ustunde'].between(start_hour, end_hour)) & ((df['ustrzustand'] == 0) | (df['ustrzustand'] == 1) | (df['ustrzustand'] == 2)) & (df['istpkw'] == 1)]
     elif vehicle == 'Fahrrad':
-        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & ((df['USTRZUSTAND'] == 0) | (df['USTRZUSTAND'] == 1) | (df['USTRZUSTAND'] == 2)) & (df['IstRad'] == 1)]
+        filtered_df = df[(df['uwochentag'].between(start_weekday, end_weekday)) & (df['ustunde'].between(start_hour, end_hour)) & ((df['ustrzustand'] == 0) | (df['ustrzustand'] == 1) | (df['ustrzustand'] == 2)) & (df['istrad'] == 1)]
     else:
         filtered_df = pd.DataFrame(columns=df.columns)  # Leerer DataFrame, wenn kein Fahrzeugtyp ausgewählt ist
     
     if roadcondition == 'alle':
-        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & ((df['IstFuss'] == 1) | (df['IstPKW'] == 1) | (df['IstRad'] == 1))]
+        filtered_df = df[(df['uwochentag'].between(start_weekday, end_weekday)) & (df['ustunde'].between(start_hour, end_hour)) & ((df['istfuss'] == 1) | (df['istpkw'] == 1) | (df['istrad'] == 1))]
     elif roadcondition == 'trocken':
-        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & ((df['IstFuss'] == 1) | (df['IstPKW'] == 1) | (df['IstRad'] == 1)) & (df['USTRZUSTAND'] == 0)]
+        filtered_df = df[(df['uwochentag'].between(start_weekday, end_weekday)) & (df['ustunde'].between(start_hour, end_hour)) & ((df['istfuss'] == 1) | (df['istpkw'] == 1) | (df['istrad'] == 1)) & (df['ustrzustand'] == 0)]
     elif roadcondition == 'nass/ feucht':
-        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & ((df['IstFuss'] == 1) | (df['IstPKW'] == 1) | (df['IstRad'] == 1)) & (df['USTRZUSTAND'] == 1)]
+        filtered_df = df[(df['uwochentag'].between(start_weekday, end_weekday)) & (df['ustunde'].between(start_hour, end_hour)) & ((df['istfuss'] == 1) | (df['istpkw'] == 1) | (df['istrad'] == 1)) & (df['ustrzustand'] == 1)]
     elif roadcondition == 'winterglatt':
-        filtered_df = df[(df['UWOCHENTAG'].between(start_weekday, end_weekday)) & (df['USTUNDE'].between(start_hour, end_hour)) & ((df['IstFuss'] == 1) | (df['IstPKW'] == 1) | (df['IstRad'] == 1)) & (df['USTRZUSTAND'] == 2)]
+        filtered_df = df[(df['uwochentag'].between(start_weekday, end_weekday)) & (df['ustunde'].between(start_hour, end_hour)) & ((df['istfuss'] == 1) | (df['istpkw'] == 1) | (df['istrad'] == 1)) & (df['ustrzustand'] == 2)]
     
-    locations = filtered_df[['YGCSWGS84', 'XGCSWGS84']].dropna()  # Standorte für Heatmap vorbereiten
+    locations = filtered_df[['ygcswgs84', 'xgcswgs84']].dropna()  # Standorte für Heatmap vorbereiten
     
     
     # Karte erstellen und auf Münster zoomen
