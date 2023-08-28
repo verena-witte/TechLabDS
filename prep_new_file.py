@@ -22,9 +22,9 @@ def get_raw_file_list(path_base=os.getcwd()) -> list:
     return raw_file_list
 
 
-def cut_to_region(csv_path: str, geo_id_dict: dict, path_base=os.getcwd()):
+def cut_to_region(csv_path: str, geo_id_dict: dict, column_dict: dict, path_base=os.getcwd()):
     # filters the dataframe from the submitted file to a region specified by
-    # the german AGS ID (amtliche Gemeinde Schlüssel)
+    # the german AGS ID (amtliche Gemeinde Schlüssel) in the geo_id_dict
 
     df_raw = pd.read_csv(csv_path, delimiter=";")
 
@@ -34,7 +34,6 @@ def cut_to_region(csv_path: str, geo_id_dict: dict, path_base=os.getcwd()):
     year = df_raw.loc[1, "ujahr"]  # retrieve the year of the data file to later namning
 
     # rename columns to get a standardized df for every file
-    column_dict = {"istsonstige": "istsonstig", "strzustand": "ustrzustand", "iststrassenzustand": "ustrzustand"}
     df_raw = df_raw.rename(column_dict, axis=1)  # renames if possible
 
     # filter df to region defined by AGS
@@ -68,12 +67,11 @@ def conc_dfs(df_list: list, path_base=os.getcwd()):
     df_comb.to_csv(os.path.join(path_base, f"Unfallorte_Muenster_comb.csv"), index=False)
 
 
-
-def main(geo_id_dict: dict, path_base=os.getcwd()):
+def main(geo_id_dict: dict, column_dict: dict, path_base=os.getcwd()):
     # controls the whole workflow
     # if path_base is not submitted, the current working directory is used as default
 
-    raw_file_list = get_raw_file_list(base_path)
+    raw_file_list = get_raw_file_list(path_base)
     print(raw_file_list)
 
     print(geo_id_dict)
@@ -83,7 +81,7 @@ def main(geo_id_dict: dict, path_base=os.getcwd()):
         print(file)
 
         try:
-            df_bike = cut_to_region(file, geo_id_dict, path_base)
+            df_bike = cut_to_region(file, geo_id_dict, column_dict, path_base)
         except:
             print(f'Error: file: {file} could not be processed')
         else:
@@ -93,13 +91,17 @@ def main(geo_id_dict: dict, path_base=os.getcwd()):
     conc_dfs(df_list, path_base)
 
 
-### for users:
-# change "base_path" for your directories which contains the "Unfallorte.._LinRef.csv/.txt" files
-# if path_base is not submitted, the current working directory is used as default
-base_path = "/home/ubuntu/TechLabs_23/Unfallorte"
-base_path = "D:\\Jo_local\\Techlabs_23\\Unfallorte"
+if __name__ == '__main__':
+    ### for users:
+    # change "path_base" according to your directories containing the "Unfallorte.._LinRef.csv/.txt" files
+    # if path_base is not submitted, the current working directory is used as default
+    path_base = ".\\Unfallorte"
 
-geo_id_dict = {"uland": np.int64("05"), "uregbez": np.int64("5"), "ukreis": np.int64("15"),
-               "ugemeinde": np.int64("000")}
+    geo_id_dict = {"uland": np.int64("05"), "uregbez": np.int64("5"), "ukreis": np.int64("15"),
+                   "ugemeinde": np.int64("000")}  # change to filter for another city or region by replacing the
+    # numbers according to the german AGS ID (amtliche Gemeinde Schlüssel)
 
-main(geo_id_dict, base_path)
+    column_dict = {"istsonstige": "istsonstig", "strzustand": "ustrzustand", "iststrassenzustand": "ustrzustand"}  #
+    # this dict is necessary to accommodate for changes in column naming of the submitted files
+
+    main(geo_id_dict, column_dict, path_base)
